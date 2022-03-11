@@ -1,0 +1,44 @@
+[aci] 
+apic
+
+# [aci:vars]
+# aci_host=198.18.133.200
+# aci_port=443
+# aci_user=admin
+# aci_password=C1sco12345
+# aci_valid_cert=false
+# aci_use_ssl=false
+
+[aci:vars]
+aci_host=10.106.236.54
+aci_port=443
+aci_user=jiacui
+aci_password=cisco!123
+aci_valid_cert=false
+aci_use_ssl=false
+
+outlook_host=smtp.gmail.com
+outlook_port=587
+outlook_username=johncui0505@gmail.com
+outlook_password=Cuijian0505
+outlook_from=johncui0505@gmail.com
+outlook_receiver=johncui0505@gmail.com
+# outlook_receiver=jiacui@cisco.com
+outlook_body=<center><h1>请查收附件中接口状态和报错信息。</h1></center>
+
+# outlook_host=smtp.outlook.com
+# outlook_port=587
+# outlook_username=thecuijian0505@outlook.com
+# outlook_password=aabbcc00
+# outlook_from=John<thecuijian0505@outlook.com>
+# outlook_receiver=John<johncui0505@gmail.com>
+# outlook_body=<center><h1>请查收附件中接口状态和报错信息。</h1></center>
+
+
+# outlook_host="smtp.office365.com"
+# outlook_port=587
+# outlook_username="thecuijian0505@outlook.com"
+# outlook_password="aabbcc00"
+# outlook_from="thecuijian0505@outlook.com"
+# outlook_receiver="thecuijian0505@outlook.com"
+# outlook_body="<center>请查收附件中接口状态和报错信息。</center>"

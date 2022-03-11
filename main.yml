@@ -1,0 +1,70 @@
+---
+- hosts: aci
+  connection: local
+  gather_facts: no
+
+  vars:
+    apic_info: &apic_info
+      host:           "{{ aci_host }}"
+      user:           "{{ aci_user }}"
+      password:       "{{ aci_password }}"
+      validate_certs: "{{ aci_valid_cert }}" 
+      use_ssl:        "{{ aci_use_ssl }}" 
+
+  tasks:
+    - name: "1] API Request - 读取所有接口的状态信息"
+      aci_rest:
+        <<: *apic_info
+        path: /api/class/ethpmPhysIf.json
+        method: get
+      register: ethpmPhysIf
+
+    - name: "2] API Request - 查询所有接口目录信息 （为节约时间，这里只收集10个接口信息）"
+      aci_rest:
+        <<: *apic_info
+        path: /api/class/l1PhysIf.json?page-size=10     # ?page-size 限制返回值大小。如需收集所有的信息，把 page-size 去掉即可。
+        method: get
+      register: l1PhysIf
+
+    - name: "3] API Request - 搜集所有接口故障数值信息"
+      aci_rest:
+        <<: *apic_info
+        path: "/api/node/mo/{{ item }}.json?query-target=children&target-subtree-class=rmonDot3Stats&target-subtree-class=rmonDot1d&target-subtree-class=rmonEtherStats"
+        method: get
+      register: rmon
+      with_items:
+        - "{{ l1PhysIf | json_query('imdata[].l1PhysIf.attributes.dn') }}"
+
+    - name: "4] 以JSON的形式存储"
+      copy:
+        content: "{{ item.content | to_nice_json}}"
+        dest:    "{{ item.dest }}"
+      no_log: yes
+      loop:
+        - content:  "{{ ethpmPhysIf | json_query('imdata[].ethpmPhysIf.attributes.{dn:dn, operSt:operSt, operMode:operMode, operSpeed:operSpeed, operDuplex:operDuplex}') }}"
+          dest:     interface_status.json
+        - content:  "{{ rmon | json_query('results[].{item:item, imdata:imdata[]}') }}" 
+          dest:     interfaces_error_counters.json
+
+    - name: "5] JSON 导出为 Excel文件（使用Python）"
+      command: python3 files/"{{ item }}"
+      loop:
+        - json2xlsx.py
+        - json2xlsx_err.py
+
+    - name: "6] 把 Excel 文件通过以附件形式发送"
+      mail:
+        host:     "{{ outlook_host }}"
+        port:     "{{ outlook_port }}"
+        username: "{{ outlook_username }}"
+        password: "{{ outlook_password }}"
+        from:     "{{ outlook_username }}"
+        to :      "{{ outlook_receiver }}"
+        subject:  "[Cisco CSS]接口状态、错误信息报告"
+        subtype:  html
+        body:     "{{ outlook_body }}"
+        secure:   starttls
+        headers:  "Content-type=text/html"
+        attach: 
+          - "./Interface_Status.xlsx"
+          - "./Interface_Error.xlsx"
